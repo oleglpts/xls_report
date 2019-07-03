@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='xls_report',
-      version='0.0.2',
+      version='0.0.3',
       packages=['xls_report'],
       url='https://github.com/oleglpts/xls_report',
       license='MIT',
@@ -17,4 +17,4 @@ setup(name='xls_report',
             'Programming Language :: Python :: 3.5'
       ],
       python_requires='>=3',
-      install_requires=['bottle>=0.12.17', 'lxml>=4.3.4', 'pyodbc>=4.0.26', 'xlwt>=1.3.0'])
+      install_requires=['lxml>=4.3.4', 'xlwt>=1.3.0'])

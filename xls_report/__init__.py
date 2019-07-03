@@ -190,7 +190,7 @@ class BaseXLSReport(BaseXML):
 
         Constructor
 
-        Required parameters: cursor, xml, [sql, title]
+        Required parameters: cursor (see Python DB-API 2.0), xml, [sql, title]
 
         :param param: parameters
         :type param: dict
