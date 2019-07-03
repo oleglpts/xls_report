@@ -3,7 +3,7 @@ Database report generation in xls-format according to the xml description
 
 Example:
 
-```
+```python
 #!/usr/bin/python3
 
 import pyodbc
@@ -33,7 +33,7 @@ cursor.close()
 connect.close()
 ```
 test.xls:
-```
+```xml
 <?xml version='1.0' encoding='utf-8'?>
 <book>
     <report>
