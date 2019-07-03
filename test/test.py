@@ -4,7 +4,7 @@ import pyodbc
 from xls_report import XLSReport
 
 #
-# Required Debian packages: build-essential unixodbc-bin unixodbc-dev libsqliteodbc
+# Required Debian packages: build-essential unixodbc-bin unixodbc-dev libsqliteodbc (driver for your database)
 # See: https://github.com/mkleehammer/pyodbc/wiki/
 #
 
@@ -25,7 +25,3 @@ report = XLSReport({
 report.to_file('test.xls')
 cursor.close()
 connect.close()
-
-
-
-
