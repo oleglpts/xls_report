@@ -6,19 +6,17 @@ Example:
 ```python
 #!/usr/bin/python3
 
-import pyodbc
+import sqlite3
 from xls_report import XLSReport
 
-#
-# Required Debian packages: build-essential unixodbc-bin unixodbc-dev libsqliteodbc (driver for your database)
-# See: https://github.com/mkleehammer/pyodbc/wiki/
-#
-
-connect = pyodbc.connect("Driver=libsqlite3odbc.so;Database=chinook.sqlite")
+connect = sqlite3.connect("chinook.sqlite")
 cursor = connect.cursor()
 report = XLSReport({
     'cursor': cursor,
     'xml': 'test_xls.xml',
+    'callback_url': 'http://localhost',
+    'callback_token': '12345',
+    'callback_frequency': 20,
     'parameters': {
         'title0': 'Invoices',
         'customer': '',
@@ -230,7 +228,7 @@ test.xls:
                 <field col="2" name="Track" header="no" row="1" width="20000" stylename="Fields"/>
                 <field col="3" name="Milliseconds" header="no" row="1" width="5000" stylename="Fields"/>
                 <field col="4" name="Bytes" header="no" row="1" width="5000" stylename="Fields"/>
-                <field col="5" name="Price" header="no" row="1" width="5000" format="0.00" stylename="Fields"/>
+                <field col="5" name="Price" header="no" row="1" progress="yes" width="5000" format="0.00" stylename="Fields"/>
             </group>
         </sql>
     </report>
