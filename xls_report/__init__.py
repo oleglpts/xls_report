@@ -2,14 +2,47 @@
 
 import abc
 import xlwt
-import pyodbc
+import json
+import pycurl
 import logging
 import builtins
 from lxml import etree
 from io import BytesIO
 from xlwt.Style import XFStyle
+from urllib.parse import urlencode
 
 _ = builtins.__dict__.get('_', lambda x: x)
+
+
+def curl_request(url, post_data=None):
+    """
+
+    Curl request
+
+    :param url: request url
+    :type url: str
+    :param post_data: post parameters
+    :type post_data: dict
+    :return: response
+    :rtype: dict
+
+    """
+    c = pycurl.Curl()
+    buf = BytesIO()
+    c.setopt(pycurl.URL, url)
+    c.setopt(pycurl.WRITEFUNCTION, buf.write)
+    c.setopt(pycurl.SSL_VERIFYPEER, 0)
+    c.setopt(pycurl.SSL_VERIFYHOST, 0)
+    if post_data is not None:
+        post_fields = urlencode(post_data)
+        c.setopt(c.POSTFIELDS, post_fields.encode())
+    c.perform()
+    c.close()
+    try:
+        response = json.loads(buf.getvalue().decode('UTF-8'))
+    except json.JSONDecodeError:
+        response = {'result': buf.getvalue().decode('UTF-8')}
+    return response
 
 
 class BaseXML(object):
@@ -316,7 +349,31 @@ class XLSReport(BaseXLSReport):
         :type param: dict
 
         """
+        self._callback_url = param.get('callback_url', '')
+        self._callback_token = param.get('callback_token', '')
+        self._callback_frequency = param.get('callback_frequency', 10)
         BaseXLSReport.__init__(self, param)
+
+    def _callback(self, parameters):
+        """
+
+        Post callback
+
+        :param parameters: post parameters for callback
+        :type parameters: dict
+        :return response
+        :rtype: dict
+
+        """
+        if not self._callback_url or not self._callback_token:
+            return None
+        try:
+            parameters['token'] = self._callback_token
+            response = curl_request(self._callback_url, post_data=parameters)
+        except Exception as exc:
+            response = {'result': str(exc)}
+        self._logger.debug('%s: %s' % (_('callback response'), response.get('result', 'None')))
+        return response
 
     def _set_parameters(self):
         """
@@ -530,7 +587,7 @@ class XLSReport(BaseXLSReport):
             return
         try:
             self._conn.execute(request)
-        except pyodbc.Error as e:
+        except Exception as e:
             self._logger.error("database error: %s" % str(e))
             self._logger.error('hint: incorrect sql or sql parameter?')
             exit(1)
@@ -572,6 +629,7 @@ class XLSReport(BaseXLSReport):
         """
         row = self._get_int(self._get_attr(node, "row")) + self._curr
         col = self._get_int(self._get_attr(node, "col"))
+        progress = self._get_attr(node, "progress")
         width = self._get_attr(node, "width")
         if width.isdigit():
             self._ws.col(col).width = self._get_int(width)
@@ -579,7 +637,8 @@ class XLSReport(BaseXLSReport):
             self._ws.write(row, col, self._get_attr(node, "name"))
         else:
             row -= self._step
-        for i in range(len(self._rows)):
+        data_length = len(self._rows)
+        for i in range(data_length):
             row += self._step
             if self._rows[i][self._field]:
                 value = self._rows[i][self._field]
@@ -601,6 +660,12 @@ class XLSReport(BaseXLSReport):
                         pass
                 append = 'font: bold True;'
             self._ws.write(row, col, value, self._get_style(node, append))
+            if not (i + 1) % int(self._callback_frequency) and progress:
+                self._callback({'status': -1, 'progress_data': i + 1, 'message': 'In progress',
+                               'length_data': data_length})
+        if progress:
+            self._callback({'status': -1, 'progress_data': data_length, 'message': 'In progress',
+                            'length_data': data_length})
         if row > self._max:
             self._max = row
         self._field += 1
