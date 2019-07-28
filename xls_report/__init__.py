@@ -589,6 +589,7 @@ class XLSReport(BaseXLSReport):
             self._conn.execute(request)
         except Exception as e:
             self._logger.error("database error: %s" % str(e))
+            self._logger.error("sql: %s" % request)
             self._logger.error('hint: incorrect sql or sql parameter?')
             exit(1)
         self._rows = self._conn.fetchall()
