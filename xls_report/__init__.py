@@ -1,5 +1,6 @@
 # _*_ coding: utf-8 _*_
 
+import os
 import abc
 import xlwt
 import json
@@ -588,7 +589,7 @@ class XLSReport(BaseXLSReport):
         if request.strip().startswith('[evaluate]'):
             request = request.split('[evaluate]')[1].split('[/evaluate]')[0].strip()
             try:
-                with open(request) as request_file:
+                with open(request.replace('~', os.path.expanduser('~'))) as request_file:
                     code = compile(request_file.read(), request, 'exec')
                     exec(code, globals(), locals())
             except FileNotFoundError:

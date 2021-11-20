@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='xls_report',
-      version='0.0.7',
+      version='0.0.8',
       packages=['xls_report'],
       url='https://github.com/oleglpts/xls_report',
       license='MIT',
