@@ -158,7 +158,7 @@ class BaseXML(object):
             result = default
         except ValueError as e:
             print("Value Error: %s - %s" % (attr, str(e)))
-            exit(1)
+            raise RuntimeError("Value Error: %s - %s" % (attr, str(e)))
         return result
 
     @staticmethod
@@ -175,10 +175,10 @@ class BaseXML(object):
             return int(number)
         except UnicodeEncodeError:
             print("UnicodeEncodeError: %s" % number)
-            exit(1)
+            raise RuntimeError("UnicodeEncodeError: %s" % number)
         except ValueError as e:
             print("Value Error: %s" % str(e))
-            exit(1)
+            raise RuntimeError("Value Error: %s" % str(e))
 
     @staticmethod
     def _string_to_list(source_string, delimiter=','):
@@ -593,7 +593,7 @@ class XLSReport(BaseXLSReport):
                     exec(code, globals(), locals())
             except FileNotFoundError:
                 self._logger.error('file \'%s\' not found' % request)
-                exit(1)
+                raise RuntimeError('file \'%s\' not found' % request)
         else:
             try:
                 self._conn.execute(request)
@@ -601,7 +601,7 @@ class XLSReport(BaseXLSReport):
                 self._logger.error("database error: %s" % str(e))
                 self._logger.error("sql: %s" % request)
                 self._logger.error('hint: incorrect sql or sql parameter?')
-                exit(1)
+                raise RuntimeError('incorrect sql or sql parameter')
             self._rows = self._conn.fetchall()
         suppress = self._string_to_list(self._get_attr(node, "suppress", ''))
         subtotal = self._string_to_list(self._get_attr(node, "subtotal", ''))
