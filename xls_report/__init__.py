@@ -585,14 +585,24 @@ class XLSReport(BaseXLSReport):
         if request is None:
             self._rows = [(0,)]
             return
-        try:
-            self._conn.execute(request)
-        except Exception as e:
-            self._logger.error("database error: %s" % str(e))
-            self._logger.error("sql: %s" % request)
-            self._logger.error('hint: incorrect sql or sql parameter?')
-            exit(1)
-        self._rows = self._conn.fetchall()
+        if request.strip().startswith('[evaluate]'):
+            request = request.split('[evaluate]')[1].split('[/evaluate]')[0].strip()
+            try:
+                with open(request) as request_file:
+                    code = compile(request_file.read(), request, 'exec')
+                    exec(code, globals(), locals())
+            except FileNotFoundError:
+                self._logger.error('file \'%s\' not found' % request)
+                exit(1)
+        else:
+            try:
+                self._conn.execute(request)
+            except Exception as e:
+                self._logger.error("database error: %s" % str(e))
+                self._logger.error("sql: %s" % request)
+                self._logger.error('hint: incorrect sql or sql parameter?')
+                exit(1)
+            self._rows = self._conn.fetchall()
         suppress = self._string_to_list(self._get_attr(node, "suppress", ''))
         subtotal = self._string_to_list(self._get_attr(node, "subtotal", ''))
         total = self._string_to_list(self._get_attr(node, "total", ''))
@@ -725,3 +735,29 @@ class XLSReport(BaseXLSReport):
             self._ws.write(row, col, value, self._get_style(node))
         if row > self._max:
             self._max = row
+
+
+if __name__ == '__main__':
+    import sqlite3
+    from xls_report import XLSReport
+
+    connect = sqlite3.connect("../test/chinook.sqlite")
+    cursor = connect.cursor()
+    report = XLSReport({
+        'cursor': cursor,
+        'xml': '../test/test_xls.xml',
+        'callback_url': 'http://localhost',
+        'callback_token': '12345',
+        'callback_frequency': 20,
+        'parameters': {
+            'title0': 'Invoices',
+            'customer': '',
+            'title1': 'Albums',
+            'title2': 'Money',
+            'title3': 'Sales',
+            'title4': 'Customers',
+            'artist': ''}
+    })
+    report.to_file('test.xls')
+    cursor.close()
+    connect.close()
